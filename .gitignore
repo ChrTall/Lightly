@@ -1,3 +1,8 @@
 .vscode/
 build/
 .clang-format
+
+.idea
+
+cmake-build-debug
+cmake-build-release
