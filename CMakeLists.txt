@@ -78,7 +78,7 @@ add_subdirectory(liblightlycommon liblightlycommon6)
 #add_subdirectory(misc)
 
     if(WITH_DECORATIONS)
-        find_package(KDecoration2 REQUIRED)
+        find_package(KDecoration3 REQUIRED)
         add_subdirectory(kdecoration)
     endif()
 

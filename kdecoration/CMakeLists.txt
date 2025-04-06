@@ -32,7 +32,7 @@ target_link_libraries(lightlydecoration
         Qt::Core
         Qt::Gui
         Qt::DBus
-        KDecoration2::KDecoration
+        KDecoration3::KDecoration
      PRIVATE
         lightlycommon6
         KF6::CoreAddons

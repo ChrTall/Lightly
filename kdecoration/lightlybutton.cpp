@@ -20,8 +20,8 @@
  */
 #include "lightlybutton.h"
 
-#include <KDecoration2/DecoratedClient>
 #include <KColorUtils>
+#include <KDecoration3/DecoratedClient>
 #include <KIconLoader>
 
 #include <QPainter>
@@ -31,39 +31,36 @@
 namespace Lightly
 {
 
-    using KDecoration2::ColorRole;
-    using KDecoration2::ColorGroup;
-    using KDecoration2::DecorationButtonType;
+using KDecoration3::ColorGroup;
+using KDecoration3::ColorRole;
+using KDecoration3::DecorationButtonType;
 
+//__________________________________________________________________
+Button::Button(DecorationButtonType type, Decoration *decoration, QObject *parent)
+    : DecorationButton(type, decoration, parent)
+    , m_animation(new QVariantAnimation(this))
+{
+    // setup animation
+    // It is important start and end value are of the same type, hence 0.0 and not just 0
+    m_animation->setStartValue(0.0);
+    m_animation->setEndValue(1.0);
+    m_animation->setEasingCurve(QEasingCurve::InOutQuad);
+    connect(m_animation, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
+        setOpacity(value.toReal());
+    });
 
-    //__________________________________________________________________
-    Button::Button(DecorationButtonType type, Decoration* decoration, QObject* parent)
-        : DecorationButton(type, decoration, parent)
-        , m_animation( new QVariantAnimation( this ) )
-    {
+    // setup default geometry
+    const int height = decoration->buttonHeight();
+    setGeometry(QRect(0, 0, height, height));
+    setIconSize(QSize(height, height));
 
-        // setup animation
-        // It is important start and end value are of the same type, hence 0.0 and not just 0
-        m_animation->setStartValue( 0.0 );
-        m_animation->setEndValue( 1.0 );
-        m_animation->setEasingCurve( QEasingCurve::InOutQuad );
-        connect(m_animation, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
-            setOpacity(value.toReal());
-        });
+    // connections
+    connect(decoration->client(), SIGNAL(iconChanged(QIcon)), this, SLOT(update()));
+    connect(decoration->settings().get(), &KDecoration3::DecorationSettings::reconfigured, this, &Button::reconfigure);
+    connect(this, &KDecoration3::DecorationButton::hoveredChanged, this, &Button::updateAnimationState);
 
-        // setup default geometry
-        const int height = decoration->buttonHeight();
-        setGeometry(QRect(0, 0, height, height));
-        setIconSize(QSize( height, height ));
-
-        // connections
-        connect(decoration->client(), SIGNAL(iconChanged(QIcon)), this, SLOT(update()));
-        connect(decoration->settings().get(), &KDecoration2::DecorationSettings::reconfigured, this, &Button::reconfigure);
-        connect( this, &KDecoration2::DecorationButton::hoveredChanged, this, &Button::updateAnimationState );
-
-        reconfigure();
-
-    }
+    reconfigure();
+}
 
     //__________________________________________________________________
     Button::Button(QObject *parent, const QVariantList &args)
@@ -76,7 +73,7 @@ namespace Lightly
     }
             
     //__________________________________________________________________
-    Button *Button::create(DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent)
+    Button *Button::create(DecorationButtonType type, KDecoration3::Decoration *decoration, QObject *parent)
     {
         if (auto d = qobject_cast<Decoration*>(decoration))
         {
@@ -86,32 +83,34 @@ namespace Lightly
 
                 case DecorationButtonType::Close:
                 b->setVisible( d->client()->isCloseable() );
-                QObject::connect(d->client(), &KDecoration2::DecoratedClient::closeableChanged, b, &Lightly::Button::setVisible );
+                QObject::connect(d->client(), &KDecoration3::DecoratedClient::closeableChanged, b, &Lightly::Button::setVisible);
                 break;
 
                 case DecorationButtonType::Maximize:
                 b->setVisible( d->client()->isMaximizeable() );
-                QObject::connect(d->client(), &KDecoration2::DecoratedClient::maximizeableChanged, b, &Lightly::Button::setVisible );
+                QObject::connect(d->client(), &KDecoration3::DecoratedClient::maximizeableChanged, b, &Lightly::Button::setVisible);
                 break;
 
                 case DecorationButtonType::Minimize:
                 b->setVisible( d->client()->isMinimizeable() );
-                QObject::connect(d->client(), &KDecoration2::DecoratedClient::minimizeableChanged, b, &Lightly::Button::setVisible );
+                QObject::connect(d->client(), &KDecoration3::DecoratedClient::minimizeableChanged, b, &Lightly::Button::setVisible);
                 break;
 
                 case DecorationButtonType::ContextHelp:
                 b->setVisible( d->client()->providesContextHelp() );
-                QObject::connect(d->client(), &KDecoration2::DecoratedClient::providesContextHelpChanged, b, &Lightly::Button::setVisible );
+                QObject::connect(d->client(), &KDecoration3::DecoratedClient::providesContextHelpChanged, b, &Lightly::Button::setVisible);
                 break;
 
                 case DecorationButtonType::Shade:
                 b->setVisible( d->client()->isShadeable() );
-                QObject::connect(d->client(), &KDecoration2::DecoratedClient::shadeableChanged, b, &Lightly::Button::setVisible );
+                QObject::connect(d->client(), &KDecoration3::DecoratedClient::shadeableChanged, b, &Lightly::Button::setVisible);
                 break;
 
                 case DecorationButtonType::Menu:
-                QObject::connect(d->client(), &KDecoration2::DecoratedClient::iconChanged, b, [b]() { b->update(); });
-                break;
+                    QObject::connect(d->client(), &KDecoration3::DecoratedClient::iconChanged, b, [b]() {
+                        b->update();
+                    });
+                    break;
 
                 default: break;
 
